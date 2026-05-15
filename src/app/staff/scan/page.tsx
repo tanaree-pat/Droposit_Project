@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Keyboard } from "lucide-react";
+import { useRequireAuth } from "@/lib/auth-context";
 import { MobileShell, PageBody } from "@/components/layout/mobile-shell";
 import { TopBar } from "@/components/layout/top-bar";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -25,7 +26,10 @@ type Mode = "deposit" | "checkout";
 
 export default function StaffScanPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useRequireAuth("staff");
   const [mode, setMode] = React.useState<Mode>("deposit");
+
+  if (authLoading || !user) return null;
   const [manualOpen, setManualOpen] = React.useState(false);
   const [code, setCode] = React.useState("");
 

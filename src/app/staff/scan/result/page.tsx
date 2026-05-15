@@ -66,7 +66,12 @@ export default function ScanResultPage() {
       setDone(true);
       setTimeout(() => router.push("/staff/batches"), 1200);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Action failed");
+      const msg = err instanceof Error ? err.message : "Action failed";
+      setActionError(
+        msg === "Staff only"
+          ? "Your session is logged in as a depositor. Log out and sign back in as staff."
+          : msg
+      );
       setLoading(false);
     }
   };
