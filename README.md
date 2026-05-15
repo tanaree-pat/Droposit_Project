@@ -1,93 +1,144 @@
 # Droposit
 
-## Commands
+A mobile-first web app for managing item deposits at high-volume events. Depositors group items into batches, generate a QR code, and hand them over to staff. Staff scan the QR to accept and return items. Every batch is tracked through three states: **pending → deposited → claimed**.
+
+---
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Frontend | Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Framer Motion |
+| Backend | Flask 3 · Flask-JWT-Extended · Flask-SQLAlchemy · flask-cors |
+| Database | SQLite (auto-created on first run) |
+| UI | Radix UI · lucide-react · `qrcode` |
+
+---
+
+## Running the project
+
+You need two terminals running simultaneously.
+
+### Backend
 
 ```bash
-npm run dev      # start dev server on http://localhost:3000
-npm run build    # production build (type-checks and compiles)
-npm run start    # serve the production build
-npm run lint     # ESLint via next lint
+cd backend
+.venv/bin/python3 app.py
 ```
 
-There are no tests in this project.
+Runs on **http://localhost:8000**. The database (`instance/droposit.db`) is created automatically on first startup — no migrations needed.
 
-## Architecture
+### Frontend
 
-**Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Framer Motion · Radix UI primitives · `qrcode` library · `lucide-react`
-
-### Role split
-
-The app has two user roles with separate route trees and navigation configs:
-
-| Role | Root route | Bottom nav config |
-|------|-----------|-------------------|
-| Depositor | `/home` | Home / Batches / QR / Profile |
-| Staff | `/staff` | Dashboard / Scan / Batches / Profile |
-
-`/` is a public landing page. `/login`, `/signup`, `/forgot-password` are auth screens (no real auth — hardcoded mock users). Role switching is done manually by navigating to `/staff` vs `/home`.
-
-### Layout system
-
-Every authenticated screen follows the same three-layer pattern:
-
-```
-<MobileShell>         ← caps width at 480px on desktop, ambient gradient bg
-  <TopBar />          ← optional right action slot
-  <PageBody>          ← px-5, pb-28 (reserves space for floating nav), gap-6
-    {page content}
-  </PageBody>
-  <BottomNav role="depositor|staff" />   ← fixed floating glass pill
-</MobileShell>
+```bash
+npm run dev
 ```
 
-`BottomNav` is role-aware and selects between `depositorNav` and `staffNav` arrays defined in `bottom-nav.tsx`. The active indicator uses Framer Motion `layoutId="nav-active"` for a shared-element spring animation.
+Runs on **http://localhost:3000**.
 
-### Design tokens
+### Other commands
 
-`tailwind.config.ts` mirrors `Style_guide.jsonc` exactly — this is the single source of truth for all colors, radii, shadows, and motion values. Do not hardcode hex values or shadow strings inline; use the token names (`primary-500`, `shadow-glow`, `rounded-xl`, `duration-fast`, etc.).
+```bash
+npm run build    # production build + type check
+npm run lint     # ESLint
+```
 
-Key semantic tokens:
-- **Surfaces:** `bg-gray-950` (ink) → `bg-gray-850` (surface) → `bg-gray-800` (elevated)
-- **Primary:** emerald (`primary-500 = #22c55e`) — actions, confirmations, active states only
-- **Secondary:** warm tan (`secondary-500 = #b67f4b`) — premium warmth, used sparingly
-- **CSS component classes** defined in `globals.css`: `.mobile-shell`, `.surface-card`, `.pressable`, `.status-pill`, `.skeleton`, `.glass-nav`, `.divider-soft`
+---
 
-### Data layer
+## First-time setup
 
-All data is static mock data in `src/lib/mock-data.ts`. There is no backend or state management library. Pages import directly from `mock-data` and render synchronously (no `use client` needed on most pages).
+**Depositor account** — go to `/signup` and register normally.
 
-Core types are in `src/lib/types.ts`. The item lifecycle is strictly `pending → deposited → claimed` — the type comment explicitly says not to expand this.
+**Staff account** — the signup page only creates depositor accounts. Create a staff account via:
 
-### Camera features
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"full_name":"Staff Name","email":"staff@example.com","password":"yourpassword","role":"staff"}'
+```
 
-- **QR display** (`src/components/qr/qr-display.tsx`): renders a QR code to a `<canvas>` using the `qrcode` npm package with pulse-glow animation.
-- **QR scanner** (`src/components/qr/qr-scanner.tsx`): uses `getUserMedia` + the browser's `BarcodeDetector` API with a graceful fallback to manual entry when the API is unavailable.
-- **Item photo capture** (in item creation pages): uses `<input type="file" capture="environment">` so mobile browsers open the rear camera directly.
+Then log in at `/login` — staff users are redirected to `/staff` automatically.
 
-### Route map
+---
+
+## How it works
+
+### Two roles
+
+| Role | Entry point | Can do |
+|---|---|---|
+| Depositor | `/home` | Create batches, add items, view QR code |
+| Staff | `/staff` | Scan QR codes, deposit and check out batches, view all batches |
+
+### Depositor flow
+
+1. Create a batch and add items to it
+2. Go to `/qr` — a QR code is generated for the batch
+3. Show the QR at the checkpoint to deposit items
+4. Return later, show the QR again to collect items
+
+### Staff flow
+
+1. Open `/staff/scan` when a depositor arrives
+2. Point the camera at their QR code
+3. Review the batch details and confirm deposit
+4. When the depositor returns, scan again and confirm checkout
+
+### Batch lifecycle
 
 ```
-/                              Landing (public)
-/login  /signup  /forgot-password
-
-Depositor (authenticated):
-/home
-/batches                       All depositor batches
-/batches/new
-/batches/[id]                  Batch detail + item list
-/batches/[id]/items/new
-/batches/[id]/items/[itemId]
-/batches/[id]/items/[itemId]/edit
-/qr                            QR code display
-/notifications
-/profile
-
-Staff (authenticated):
-/staff                         Dashboard
-/staff/scan                    QR scanner
-/staff/scan/result
-/staff/batches
-/staff/batches/[id]
-/staff/batches/[id]/items/[itemId]
-/staff/profile
+pending  →  deposited  →  claimed
+(created)   (staff scans)  (staff returns)
 ```
+
+Status only moves forward — it cannot be reversed.
+
+---
+
+## Project structure
+
+```
+Droposit/
+├── backend/
+│   ├── app.py          App factory, CORS, blueprint registration
+│   ├── config.py       Secrets, DB URI, JWT expiry (24h)
+│   ├── models.py       User, Batch, Item, ScanLog
+│   ├── auth.py         POST /auth/register  POST /auth/login
+│   ├── batches.py      Depositor batch and item CRUD
+│   ├── scan.py         QR resolve, deposit, checkout
+│   ├── admin.py        Staff-only batch views
+│   └── instance/
+│       └── droposit.db SQLite database
+│
+├── src/
+│   ├── app/            Next.js pages (App Router)
+│   ├── components/     UI components (layout, batch cards, QR, primitives)
+│   └── lib/
+│       ├── api.ts      Typed API client + backend→frontend mappers
+│       ├── types.ts    Shared TypeScript types
+│       └── auth-context.tsx  Auth state, JWT storage, useRequireAuth
+│
+├── .env.local          NEXT_PUBLIC_API_URL=http://localhost:8000
+└── tailwind.config.ts  Design tokens (colors, shadows, type scale)
+```
+
+---
+
+## API overview
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/auth/register` | — | Create account |
+| POST | `/auth/login` | — | Get JWT |
+| GET | `/batches` | depositor | List own batches |
+| POST | `/batches` | depositor | Create batch |
+| GET | `/batches/:id` | depositor | Get batch + items |
+| POST | `/batches/:id/items` | depositor | Add item |
+| PATCH | `/batches/:id/items/:itemId` | depositor | Edit item |
+| GET | `/scan/:token` | any | Resolve QR token |
+| POST | `/scan/:token/deposit` | staff | Mark as deposited |
+| POST | `/scan/:token/checkout` | staff | Mark as claimed |
+| GET | `/admin/batches` | staff | List all batches |
+| GET | `/admin/batches/:id` | staff | Batch detail |
+
+Full documentation in `PROJECT.md`.
