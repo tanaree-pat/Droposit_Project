@@ -4,92 +4,121 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+### Frontend (Next.js)
 ```bash
-npm run dev      # start dev server on http://localhost:3000
-npm run build    # production build (type-checks and compiles)
-npm run start    # serve the production build
+npm run dev      # dev server on http://localhost:3000
+npm run build    # production build — type-checks and compiles all 23 routes
 npm run lint     # ESLint via next lint
 ```
+
+### Backend (Flask)
+```bash
+cd backend
+.venv/bin/python3 app.py        # start API server on http://localhost:8000
+```
+
+The backend **must** be started from inside the `backend/` directory — SQLAlchemy resolves `sqlite:///droposit.db` relative to the working directory and Flask stores it under `backend/instance/droposit.db`.
+
+Port 5000 is taken by macOS AirPlay; the backend runs on **8000**.
 
 There are no tests in this project.
 
 ## Architecture
 
-**Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Framer Motion · Radix UI primitives · `qrcode` library · `lucide-react`
+### Stack
+
+| Layer | Tech |
+|-------|------|
+| Frontend | Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Framer Motion |
+| Backend | Flask 3 · Flask-JWT-Extended · Flask-SQLAlchemy · flask-cors 6 |
+| Database | SQLite via `backend/instance/droposit.db` (auto-created on first startup) |
+| UI primitives | Radix UI · lucide-react · `qrcode` npm package |
 
 ### Role split
 
-The app has two user roles with separate route trees and navigation configs:
+Two user roles with entirely separate route trees:
 
-| Role | Root route | Bottom nav config |
-|------|-----------|-------------------|
+| Role | Root | Bottom nav |
+|------|------|------------|
 | Depositor | `/home` | Home / Batches / QR / Profile |
 | Staff | `/staff` | Dashboard / Scan / Batches / Profile |
 
-`/` is a public landing page. `/login`, `/signup`, `/forgot-password` are auth screens (no real auth — hardcoded mock users). Role switching is done manually by navigating to `/staff` vs `/home`.
+`useRequireAuth(role?)` in `src/lib/auth-context.tsx` enforces access: redirects to `/login` if unauthenticated, or to the correct role root if the wrong role tries to access a route. All staff pages **must** call `useRequireAuth("staff")`.
+
+### Auth flow
+
+- JWT stored in `localStorage` as `drp_token`; decoded user object stored as `drp_user`
+- `AuthProvider` (`src/components/providers.tsx` → `src/lib/auth-context.tsx`) restores session from localStorage on mount and listens for a `drp:unauthorized` custom event that triggers auto-logout
+- Any `api.ts` request that gets a 401 dispatches `drp:unauthorized` and throws `Error("Unauthorized")`
+- JWT payload includes `additional_claims: { role }` — backend role checks use `get_jwt().get('role') == 'staff'`
+- The staff role can only be created via `POST /auth/register` with `"role": "staff"` in the body; the signup page always creates `depositor` accounts
+
+### Backend structure
+
+```
+backend/
+  app.py       — factory function, CORS config (origin: localhost:3000), blueprint registration
+  config.py    — Config class: JWT secret, 24h token expiry, DB URI
+  models.py    — User, Batch, Item, ScanLog (SQLAlchemy models)
+  auth.py      — /auth/register, /auth/login
+  batches.py   — /batches (depositor CRUD: list, create, get, add item, edit item)
+  scan.py      — /scan/<qr_token> (resolve), /deposit, /checkout (staff-only POSTs)
+  admin.py     — /admin/batches (staff-only: list all, get detail)
+```
+
+`db.create_all()` runs on every startup — schema changes require manual migration or deleting `instance/droposit.db`.
+
+### Frontend data layer
+
+`src/lib/api.ts` is the single API client. Key points:
+- `request<T>()` base function attaches Bearer token and handles 401
+- Raw backend shapes (`RawBatch`, `RawItem`, `RawAdminBatch`, etc.) are mapped to frontend `Batch`/`Item` types by `mapBatch()`, `mapAdminBatch()`, `mapAdminBatchDetail()`
+- Item `status` has no independent column in the DB — items inherit their batch's status via `mapItem(raw, batchId, batchStatus)`
+- Admin list response (`RawAdminBatch`) uses `owner` as a plain string; admin detail (`RawAdminBatchDetail`) uses `owner: { id, full_name, email }`
+- QR tokens (`qr_token`) are NOT returned by admin list/detail endpoints; they're only available on depositor batch endpoints and scan resolve
 
 ### Layout system
 
-Every authenticated screen follows the same three-layer pattern:
-
+Every authenticated screen:
 ```
-<MobileShell>         ← caps width at 480px on desktop, ambient gradient bg
-  <TopBar />          ← optional right action slot
-  <PageBody>          ← px-5, pb-28 (reserves space for floating nav), gap-6
+<MobileShell>         ← 480px max-width cap, ambient gradient bg
+  <TopBar />          ← optional back/title/right-action slots
+  <PageBody>          ← px-5, pb-28 (reserves floating nav space), gap-6, accepts className
     {page content}
   </PageBody>
-  <BottomNav role="depositor|staff" />   ← fixed floating glass pill
+  <BottomNav role="depositor|staff" />
 </MobileShell>
 ```
 
-`BottomNav` is role-aware and selects between `depositorNav` and `staffNav` arrays defined in `bottom-nav.tsx`. The active indicator uses Framer Motion `layoutId="nav-active"` for a shared-element spring animation.
+Hero-style pages (create batch, signup, staff batch detail) skip `TopBar` and use a custom header + full-bleed gradient `<section>` instead, with the card positioned at `-mt-6` below the hero.
 
 ### Design tokens
 
-`tailwind.config.ts` mirrors `Style_guide.jsonc` exactly — this is the single source of truth for all colors, radii, shadows, and motion values. Do not hardcode hex values or shadow strings inline; use the token names (`primary-500`, `shadow-glow`, `rounded-xl`, `duration-fast`, etc.).
+`tailwind.config.ts` mirrors `Style_guide.jsonc` exactly — single source of truth. Never hardcode hex values or shadow strings.
 
-Key semantic tokens:
-- **Surfaces:** `bg-gray-950` (ink) → `bg-gray-850` (surface) → `bg-gray-800` (elevated)
-- **Primary:** emerald (`primary-500 = #22c55e`) — actions, confirmations, active states only
-- **Secondary:** warm tan (`secondary-500 = #b67f4b`) — premium warmth, used sparingly
-- **CSS component classes** defined in `globals.css`: `.mobile-shell`, `.surface-card`, `.pressable`, `.status-pill`, `.skeleton`, `.glass-nav`, `.divider-soft`
+- **Surfaces:** `bg-gray-950` → `bg-gray-850` → `bg-gray-800`
+- **Primary:** emerald `primary-500` (`#22c55e`) — actions, confirmations, active states only
+- **Secondary:** warm tan `secondary-500` (`#b67f4b`) — staff accent color, used sparingly
+- **CSS classes** in `globals.css`: `.surface-card`, `.pressable`, `.glass-nav`, `.mobile-shell`, `.skeleton`, `.divider-soft`
 
-### Data layer
+### Item lifecycle
 
-All data is static mock data in `src/lib/mock-data.ts`. There is no backend or state management library. Pages import directly from `mock-data` and render synchronously (no `use client` needed on most pages).
+`pending → deposited → claimed` — strictly one-way. Do not add statuses. Staff deposit/checkout is done via QR scan; direct status mutation from the UI is intentional only through the scan flow (`/staff/scan → /staff/scan/result`).
 
-Core types are in `src/lib/types.ts`. The item lifecycle is strictly `pending → deposited → claimed` — the type comment explicitly says not to expand this.
+### Error handling pattern
 
-### Camera features
+Pages that call the API use inline error states — never `notFound()` from a Client Component for API failures. The pattern:
 
-- **QR display** (`src/components/qr/qr-display.tsx`): renders a QR code to a `<canvas>` using the `qrcode` npm package with pulse-glow animation.
-- **QR scanner** (`src/components/qr/qr-scanner.tsx`): uses `getUserMedia` + the browser's `BarcodeDetector` API with a graceful fallback to manual entry when the API is unavailable.
-- **Item photo capture** (in item creation pages): uses `<input type="file" capture="environment">` so mobile browsers open the rear camera directly.
-
-### Route map
-
+```tsx
+const [error, setError] = React.useState<string | null>(null);
+// ...
+.catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
+// ...
+if (!loading && error) return <error card with back button />;
 ```
-/                              Landing (public)
-/login  /signup  /forgot-password
 
-Depositor (authenticated):
-/home
-/batches                       All depositor batches
-/batches/new
-/batches/[id]                  Batch detail + item list
-/batches/[id]/items/new
-/batches/[id]/items/[itemId]
-/batches/[id]/items/[itemId]/edit
-/qr                            QR code display
-/notifications
-/profile
+### Camera / QR features
 
-Staff (authenticated):
-/staff                         Dashboard
-/staff/scan                    QR scanner
-/staff/scan/result
-/staff/batches
-/staff/batches/[id]
-/staff/batches/[id]/items/[itemId]
-/staff/profile
-```
+- **QR display** (`src/components/qr/qr-display.tsx`): renders to `<canvas>` using the `qrcode` package. Encodes `droposit://scan/{qr_token}`.
+- **QR scanner** (`src/components/qr/qr-scanner.tsx`): `getUserMedia` + `BarcodeDetector` API; strips the `droposit://scan/` prefix before navigating to `/staff/scan/result?token=…`
+- **Item photo**: `<input type="file" capture="environment">` — opens rear camera directly on mobile
