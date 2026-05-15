@@ -7,6 +7,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input, TextArea, Field } from "@/components/ui/input";
 import { MobileShell } from "@/components/layout/mobile-shell";
+import { useRequireAuth } from "@/lib/auth-context";
+import { batchesApi } from "@/lib/api";
 
 /**
  * Create new batch — matches the mockup's "Let's Create Your New Batch"
@@ -14,18 +16,27 @@ import { MobileShell } from "@/components/layout/mobile-shell";
  */
 export default function NewBatchPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useRequireAuth("depositor");
   const [name, setName] = React.useState("");
   const [desc, setDesc] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    setError(null);
     setLoading(true);
-    // Optimistic — in production this returns the new batch id; for the
-    // prototype we route into the first batch where users can add items.
-    setTimeout(() => router.push("/batches/b_001"), 500);
+    try {
+      const batch = await batchesApi.create({ name: name.trim(), description: desc.trim() || undefined });
+      router.push(`/batches/${batch.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create batch");
+      setLoading(false);
+    }
   };
+
+  if (authLoading || !user) return null;
 
   return (
     <MobileShell>
@@ -57,6 +68,9 @@ export default function NewBatchPage() {
       </section>
 
       <form onSubmit={submit} className="mx-5 -mt-6 surface-card p-6 flex flex-col gap-5">
+        {error && (
+          <p className="rounded-lg bg-danger/10 border border-danger/20 px-4 py-3 text-small text-danger">{error}</p>
+        )}
         <Field label="Batch name" required>
           <Input
             placeholder="e.g. Exam day essentials"

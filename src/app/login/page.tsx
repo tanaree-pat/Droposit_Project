@@ -8,27 +8,32 @@ import { ArrowDownToLine, Lock, MoreHorizontal, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MobileShell } from "@/components/layout/mobile-shell";
+import { useAuth } from "@/lib/auth-context";
 
-/**
- * Login screen — follows the mockup structure (logo block, two inputs,
- * forgot password, sign-in CTA, secondary "create an account") but uses
- * the dark/emerald design system instead of the mockup's flat green.
- */
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    // Simulated auth — depositor home.
-    setTimeout(() => router.push("/home"), 700);
+    try {
+      const user = await login(email, password);
+      router.replace(user.role === "staff" ? "/staff" : "/home");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+      setLoading(false);
+    }
   };
 
   return (
     <MobileShell>
       <div className="relative flex-1 flex flex-col">
-        {/* Hero block with logo mark */}
         <section
           className="relative overflow-hidden rounded-b-[40px] pt-6 pb-12 px-6"
           style={{
@@ -65,7 +70,6 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* Form panel */}
         <motion.form
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -73,9 +77,16 @@ export default function LoginPage() {
           onSubmit={submit}
           className="-mt-6 mx-5 surface-card p-6 flex flex-col gap-4"
         >
+          {error && (
+            <p className="rounded-lg bg-danger/10 border border-danger/20 px-4 py-3 text-small text-danger">
+              {error}
+            </p>
+          )}
           <Input
             type="email"
-            placeholder="Email or phone"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             leadingIcon={<User size={18} />}
             autoComplete="email"
             required
@@ -83,6 +94,8 @@ export default function LoginPage() {
           <Input
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             leadingIcon={<Lock size={18} />}
             autoComplete="current-password"
             required
@@ -113,14 +126,9 @@ export default function LoginPage() {
         <div className="flex-1" />
         <p className="px-6 pb-8 pt-4 text-center text-caption text-gray-500">
           By continuing you agree to our{" "}
-          <Link href="#" className="underline text-gray-400">
-            Terms
-          </Link>{" "}
+          <Link href="#" className="underline text-gray-400">Terms</Link>{" "}
           and{" "}
-          <Link href="#" className="underline text-gray-400">
-            Privacy Policy
-          </Link>
-          .
+          <Link href="#" className="underline text-gray-400">Privacy Policy</Link>.
         </p>
       </div>
     </MobileShell>

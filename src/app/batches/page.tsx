@@ -10,13 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BatchCard } from "@/components/batch/batch-card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { batches } from "@/lib/mock-data";
-import type { ItemStatus } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRequireAuth } from "@/lib/auth-context";
+import { batchesApi } from "@/lib/api";
+import type { Batch, ItemStatus } from "@/lib/types";
 
-/**
- * Depositor batch list — filterable chip rail, search, and a sticky
- * "Add new batch" CTA at the bottom edge.
- */
 const filters: { value: "all" | ItemStatus; label: string }[] = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
@@ -25,20 +23,27 @@ const filters: { value: "all" | ItemStatus; label: string }[] = [
 ];
 
 export default function BatchesPage() {
+  const { user, loading: authLoading } = useRequireAuth("depositor");
+  const [batches, setBatches] = React.useState<Batch[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [filter, setFilter] = React.useState<"all" | ItemStatus>("all");
   const [query, setQuery] = React.useState("");
 
-  const visible = React.useMemo(() => {
-    return batches.filter((b) => {
-      const matchStatus = filter === "all" || b.status === filter;
-      const q = query.trim().toLowerCase();
-      const matchQuery =
-        !q ||
-        b.title.toLowerCase().includes(q) ||
-        b.description.toLowerCase().includes(q);
-      return matchStatus && matchQuery;
-    });
-  }, [filter, query]);
+  React.useEffect(() => {
+    if (!user) return;
+    batchesApi.list()
+      .then(setBatches)
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  if (authLoading || !user) return null;
+
+  const visible = batches.filter((b) => {
+    const matchStatus = filter === "all" || b.status === filter;
+    const q = query.trim().toLowerCase();
+    const matchQuery = !q || b.title.toLowerCase().includes(q) || b.description.toLowerCase().includes(q);
+    return matchStatus && matchQuery;
+  });
 
   return (
     <MobileShell>
@@ -47,8 +52,7 @@ export default function BatchesPage() {
         <section>
           <h1 className="text-h1 font-display text-white">Batch list</h1>
           <p className="mt-1 text-small text-gray-400">
-            You currently have {batches.length} active batch{batches.length === 1 ? "" : "es"}{" "}
-            in your list.
+            You currently have {batches.length} active batch{batches.length === 1 ? "" : "es"} in your list.
           </p>
         </section>
 
@@ -60,7 +64,6 @@ export default function BatchesPage() {
           surface="dark"
         />
 
-        {/* Filter chip rail */}
         <div className="-mx-5 px-5 flex gap-2 overflow-x-auto no-scrollbar">
           {filters.map((f) => {
             const active = f.value === filter;
@@ -81,8 +84,11 @@ export default function BatchesPage() {
           })}
         </div>
 
-        {/* List */}
-        {visible.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            {[0, 1, 2].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+          </div>
+        ) : visible.length === 0 ? (
           <EmptyState
             icon={<Search size={24} />}
             title="No batches found"
@@ -102,12 +108,9 @@ export default function BatchesPage() {
         )}
       </PageBody>
 
-      {/* Sticky-style floating CTA — sits above bottom nav */}
       <div className="fixed bottom-[92px] inset-x-0 z-30 mx-auto w-full max-w-[480px] px-5 pointer-events-none">
         <Button asChild fullWidth className="pointer-events-auto">
-          <Link href="/batches/new">
-            <Plus size={18} /> Add new batch
-          </Link>
+          <Link href="/batches/new"><Plus size={18} /> Add new batch</Link>
         </Button>
       </div>
 
