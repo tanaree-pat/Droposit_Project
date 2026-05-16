@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ScanLine, AlertCircle, Package } from "lucide-react";
 import { MobileShell, PageBody } from "@/components/layout/mobile-shell";
-import { TopBar } from "@/components/layout/top-bar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -59,49 +58,50 @@ export default function StaffBatchDetail() {
 
   return (
     <MobileShell>
-      <header className="flex items-center justify-between px-5 pt-5 safe-top">
-        <Link
-          href="/staff/batches"
-          aria-label="Back"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white hover:bg-white/[0.1] transition"
-        >
-          <ArrowLeft size={18} />
-        </Link>
-        {batch && <StatusPill status={batch.status} tone="solid" />}
-      </header>
-
-      {/* Hero section */}
       <section
-        className="relative -mt-3 rounded-b-[40px] px-6 pt-6 pb-10"
+        className="relative overflow-hidden rounded-b-[40px] px-6 pb-10 safe-top pt-5"
         style={{
           background: "linear-gradient(170deg, #1c1400 0%, #291e00 60%, #1a1200 100%)",
         }}
       >
-        {loading ? (
-          <>
-            <Skeleton className="h-4 w-28 mb-2" />
-            <Skeleton className="h-9 w-3/4 mb-3" />
-            <Skeleton className="h-4 w-16" />
-          </>
-        ) : batch ? (
-          <>
-            <p className="text-caption uppercase tracking-[0.16em] text-secondary-300/80">
-              {batch.ownerName}
-            </p>
-            <h1 className="mt-1 text-display font-display text-white leading-[0.95]">
-              {batch.title}
-            </h1>
-            {batch.description && (
-              <p className="mt-3 text-small text-white/60 max-w-[36ch]">{batch.description}</p>
-            )}
-            <div className="mt-4 flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 text-small text-white/70">
-                <Package size={14} />
-                {batch.items.length} item{batch.items.length === 1 ? "" : "s"}
-              </span>
-            </div>
-          </>
-        ) : null}
+        <div className="relative flex items-center justify-between">
+          <Link
+            href="/staff/batches"
+            aria-label="Back"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.10] text-white hover:bg-white/[0.18] transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          {batch && <StatusPill status={batch.status} tone="solid" />}
+        </div>
+
+        <div className="relative mt-4">
+          {loading ? (
+            <>
+              <Skeleton className="h-4 w-28 mb-2" />
+              <Skeleton className="h-9 w-3/4 mb-3" />
+              <Skeleton className="h-4 w-16" />
+            </>
+          ) : batch ? (
+            <>
+              <p className="text-caption uppercase tracking-[0.16em] text-secondary-300/80">
+                {batch.ownerName}
+              </p>
+              <h1 className="mt-1 text-display font-display text-white leading-[0.95]">
+                {batch.title}
+              </h1>
+              {batch.description && (
+                <p className="mt-3 text-small text-white/60 max-w-[36ch]">{batch.description}</p>
+              )}
+              <div className="mt-4 flex items-center gap-3">
+                <span className="inline-flex items-center gap-1.5 text-small text-white/70">
+                  <Package size={14} />
+                  {batch.items.length} item{batch.items.length === 1 ? "" : "s"}
+                </span>
+              </div>
+            </>
+          ) : null}
+        </div>
       </section>
 
       <PageBody className="-mt-6">
