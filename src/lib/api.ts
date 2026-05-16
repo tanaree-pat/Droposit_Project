@@ -1,6 +1,9 @@
 import type { Batch, Item } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE =
+  typeof window !== "undefined"
+    ? `http://${window.location.hostname}:8000`
+    : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
