@@ -44,7 +44,7 @@ export function BottomNav({ role = "depositor" }: { role?: Role }) {
       aria-label="Primary"
       className="fixed bottom-0 inset-x-0 z-40 mx-auto w-full max-w-[480px] px-4 safe-bottom pointer-events-none"
     >
-      <div className="glass-nav pointer-events-auto mb-3 flex items-center justify-around rounded-full px-2 py-2 shadow-floating">
+      <div className="glass-nav pointer-events-auto mb-1 flex items-center justify-around rounded-full px-2 py-2 shadow-floating">
         {nav.map((item) => {
           const active =
             pathname === item.href ||

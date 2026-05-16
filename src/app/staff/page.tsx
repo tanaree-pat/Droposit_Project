@@ -46,7 +46,7 @@ export default function StaffDashboardPage() {
           </p>
           <h1 className="mt-1 text-h1 font-display text-white">Checkpoint A</h1>
           <p className="mt-1 text-small text-gray-400">
-            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Bangkok" })}
           </p>
         </section>
 

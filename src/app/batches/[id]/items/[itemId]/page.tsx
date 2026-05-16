@@ -62,7 +62,7 @@ export default function ItemDetailPage() {
         ) : (
           <>
             <header className="flex flex-col items-center text-center gap-3">
-              <h1 className="text-h1 font-display text-white">My Item Status</h1>
+              <h1 className="text-h1 font-display text-white">{item.title}</h1>
               <StatusPill status={item.status} tone="solid" />
               <p className="text-small text-gray-400 max-w-[30ch]">{copy?.sub}</p>
             </header>
@@ -87,6 +87,7 @@ export default function ItemDetailPage() {
               <ReadField label="Item name" value={item.title} />
               <ReadField label="Description" value={item.description} multiline />
             </div>
+            {copy?.cta && <div className="h-14" />}
           </>
         )}
       </PageBody>

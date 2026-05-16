@@ -28,24 +28,23 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className
         )}
       >
-        {leadingIcon ? (
+        {leadingIcon && (
           <span
             className={cn(
-              "pl-5 pr-3 flex items-center",
+              "pl-5 pr-3 flex items-center shrink-0",
               surface === "dark" ? "text-gray-400" : "text-gray-500"
             )}
             aria-hidden
           >
             {leadingIcon}
           </span>
-        ) : (
-          <span className="w-5" aria-hidden />
         )}
         <input
           ref={ref}
           className={cn(
-            "flex-1 bg-transparent text-body placeholder:text-gray-500 outline-none",
+            "flex-1 min-w-0 bg-transparent text-body placeholder:text-gray-500 outline-none",
             surface === "light" && "text-gray-900 placeholder:text-gray-400",
+            leadingIcon ? "pl-2" : "pl-5",
             trailingIcon ? "pr-3" : "pr-5"
           )}
           {...props}

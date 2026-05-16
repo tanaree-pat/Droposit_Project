@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, ChevronRight, HelpCircle, LogOut, Shield, UserCog } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
 import { MobileShell, PageBody } from "@/components/layout/mobile-shell";
 import { TopBar } from "@/components/layout/top-bar";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -66,13 +65,6 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="surface-card divide-y divide-white/[0.05]">
-          <Row href="/profile/account" icon={<UserCog size={18} />} label="Account details" />
-          <Row href="/notifications" icon={<Bell size={18} />} label="Notifications" />
-          <Row href="/profile/security" icon={<Shield size={18} />} label="Security & QR settings" />
-          <Row href="/profile/help" icon={<HelpCircle size={18} />} label="Help & support" />
-        </section>
-
         <Button fullWidth variant="ghost" className="text-danger hover:text-red-300" onClick={handleLogout}>
           <LogOut size={18} /> Sign out
         </Button>
@@ -93,12 +85,3 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Row({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-3 p-5 hover:bg-white/[0.02] transition">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.05] text-gray-300">{icon}</span>
-      <span className="flex-1 text-body text-white">{label}</span>
-      <ChevronRight size={18} className="text-gray-500" />
-    </Link>
-  );
-}

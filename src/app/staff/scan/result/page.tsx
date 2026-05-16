@@ -138,13 +138,6 @@ export default function ScanResultPage() {
           </MetaRow>
         </section>
 
-        {action && (
-          <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-            <p className="text-caption text-gray-500 uppercase tracking-wider mb-1">Endpoint</p>
-            <p className="font-mono text-caption text-gray-300">POST /scan/{batch.qr_token}/{action}</p>
-          </div>
-        )}
-
         {actionError && (
           <p className="rounded-lg bg-danger/10 border border-danger/20 px-4 py-3 text-small text-danger">{actionError}</p>
         )}

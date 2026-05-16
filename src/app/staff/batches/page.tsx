@@ -50,7 +50,7 @@ export default function StaffBatchesPage() {
 
   return (
     <MobileShell>
-      <TopBar />
+      <TopBar rightAction={<></>} />
       <PageBody>
         <section>
           <h1 className="text-h1 font-display text-white">Batch list</h1>

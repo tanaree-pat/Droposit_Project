@@ -38,12 +38,3 @@ export interface Batch {
   createdAt: string;
   items: Item[];
 }
-
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  type: "deposit" | "retrieval" | "system";
-}

@@ -7,35 +7,21 @@ import { useRequireAuth } from "@/lib/auth-context";
 import { MobileShell, PageBody } from "@/components/layout/mobile-shell";
 import { TopBar } from "@/components/layout/top-bar";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { Segmented } from "@/components/ui/segmented";
 import { QRScanner } from "@/components/qr/qr-scanner";
 import { Sheet } from "@/components/ui/sheet";
 import { Input, Field } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-/**
- * Staff scan screen — the central operational workflow.
- *  - Tabs: Deposit | Checkout (mirrors mockup)
- *  - QR scanner streams live preview with reticle + scan line
- *  - Manual entry fallback in a sheet for damaged or unreadable codes
- *
- * After detection, navigates to the user's batch list scoped to that
- * action so staff can verify and confirm.
- */
-type Mode = "deposit" | "checkout";
-
 export default function StaffScanPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useRequireAuth("staff");
-  const [mode, setMode] = React.useState<Mode>("deposit");
-
-  if (authLoading || !user) return null;
   const [manualOpen, setManualOpen] = React.useState(false);
   const [code, setCode] = React.useState("");
 
+  if (authLoading || !user) return null;
+
   const handleResult = React.useCallback(
     (value: string) => {
-      // Parse droposit://scan/{qr_token} — strip protocol prefix if present
       const token = value.startsWith("droposit://scan/")
         ? value.slice("droposit://scan/".length)
         : value.trim();
@@ -46,28 +32,16 @@ export default function StaffScanPage() {
 
   return (
     <MobileShell>
-      <TopBar back title={mode === "deposit" ? "Deposit item" : "Checkout item"} />
+      <TopBar back title="Scan QR" rightAction={<></>} />
       <PageBody>
-        <section className="flex flex-col gap-3">
-          <h1 className="text-h1 font-display text-white">
-            {mode === "deposit" ? "Deposit item" : "Checkout item"}
-          </h1>
-          <Segmented<Mode>
-            options={[
-              { value: "deposit", label: "Deposit" },
-              { value: "checkout", label: "Checkout" },
-            ]}
-            value={mode}
-            onChange={setMode}
-            tone="warm"
-          />
+        <section className="flex flex-col gap-2">
+          <h1 className="text-h1 font-display text-white">Scan QR</h1>
+          <p className="text-small text-gray-400">
+            Point the camera at any depositor&apos;s QR code to deposit or retrieve their batch.
+          </p>
         </section>
 
-        <QRScanner mode={mode} onResult={handleResult} />
-
-        <p className="text-small text-gray-400 text-center max-w-[34ch] mx-auto">
-          Use camera to scan QR codes in order to {mode === "deposit" ? "deposit" : "retrieve"} item(s).
-        </p>
+        <QRScanner onResult={handleResult} />
 
         <Button variant="secondary" size="md" onClick={() => setManualOpen(true)}>
           <Keyboard size={16} /> Enter code manually
@@ -90,7 +64,7 @@ export default function StaffScanPage() {
         >
           <Field label="Verification code" required>
             <Input
-              placeholder="e.g. DRP-A1B2-C3D4"
+              placeholder="e.g. drp-a1b2c3d4"
               autoFocus
               value={code}
               onChange={(e) => setCode(e.target.value)}

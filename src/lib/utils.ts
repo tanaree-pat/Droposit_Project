@@ -20,7 +20,7 @@ export function formatRelative(input: Date | string | number): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Bangkok" });
 }
 
 /** Stable hash to derive deterministic colors / fallback avatars. */

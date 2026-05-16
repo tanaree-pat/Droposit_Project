@@ -3,11 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, User, Check } from "lucide-react";
+import { Lock, Mail, User, Check, UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Field } from "@/components/ui/input";
 import { MobileShell } from "@/components/layout/mobile-shell";
-import { TopBar } from "@/components/layout/top-bar";
 import { useAuth } from "@/lib/auth-context";
 import { authApi } from "@/lib/api";
 
@@ -40,20 +39,26 @@ export default function SignUpPage() {
 
   return (
     <MobileShell>
-      <TopBar back={{ href: "/login" }} rightAction={<span aria-hidden className="w-11" />} />
       <section
-        className="relative -mt-[60px] rounded-b-[40px] px-6 pt-20 pb-10"
-        style={{
-          background: "linear-gradient(170deg, #14532d 0%, #0f4a2a 60%, #0b3a22 100%)",
-        }}
+        className="relative overflow-hidden rounded-b-[40px] px-6 pb-10 safe-top pt-5"
+        style={{ background: "linear-gradient(170deg, #0d3320 0%, #0f4a2a 50%, #0b3a22 100%)" }}
       >
-        <p className="text-h2 font-display text-white/85">Let&apos;s</p>
-        <h1 className="text-display font-display text-white leading-[0.95]">
-          Create Your<br />Account
-        </h1>
-        <p className="mt-3 text-small text-white/70 max-w-[34ch]">
-          Set up your Droposit ID to start grouping items into batches.
-        </p>
+        {/* Ambient glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-16 -right-12 h-56 w-56 rounded-full opacity-50 blur-3xl"
+          style={{ background: "radial-gradient(closest-side, rgba(34,197,94,0.6), transparent)" }}
+        />
+
+        <div className="relative mt-4">
+          <p className="text-h2 font-display text-white/85">Let&apos;s</p>
+          <h1 className="text-display font-display text-white leading-[0.95]">
+            Create Your<br />Account
+          </h1>
+          <p className="mt-3 text-small text-white/70 max-w-[34ch]">
+            Set up your Droposit ID to start grouping items into batches.
+          </p>
+        </div>
       </section>
 
       <form onSubmit={submit} className="mx-5 -mt-6 surface-card p-6 flex flex-col gap-4">
@@ -74,7 +79,7 @@ export default function SignUpPage() {
         <Field label="Email address" required>
           <Input
             type="email"
-            placeholder="you@droposit.app"
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             leadingIcon={<Mail size={18} />}

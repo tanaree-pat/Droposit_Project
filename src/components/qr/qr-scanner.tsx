@@ -5,17 +5,6 @@ import { motion } from "framer-motion";
 import { Camera, RefreshCw, ZapOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/**
- * Browser-based QR/barcode scanner using getUserMedia.
- *
- * Detection strategy:
- * 1. If BarcodeDetector is available (Chromium/Android), use it natively.
- * 2. Otherwise the component still streams the camera preview so staff
- *    can frame the code; on supported environments it auto-detects.
- *
- * This is intentionally tolerant — production would fall back to a JS
- * decoder library, but we keep dependencies light.
- */
 type ScannerStatus = "idle" | "requesting" | "ready" | "denied" | "unsupported";
 
 interface DetectedBarcode {
@@ -28,13 +17,7 @@ type AnyBarcodeDetector = new (opts?: {
   detect: (source: CanvasImageSource) => Promise<DetectedBarcode[]>;
 };
 
-export function QRScanner({
-  onResult,
-  mode = "deposit",
-}: {
-  onResult: (value: string) => void;
-  mode?: "deposit" | "checkout";
-}) {
+export function QRScanner({ onResult }: { onResult: (value: string) => void }) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
   const rafRef = React.useRef<number | null>(null);
@@ -56,7 +39,6 @@ export function QRScanner({
       }
       setStatus("ready");
 
-      // Optional native detection
       const Detector = (window as unknown as { BarcodeDetector?: AnyBarcodeDetector })
         .BarcodeDetector;
       if (Detector) {
@@ -76,8 +58,6 @@ export function QRScanner({
           rafRef.current = requestAnimationFrame(tick);
         };
         rafRef.current = requestAnimationFrame(tick);
-      } else {
-        setStatus("ready");
       }
     } catch (e) {
       const msg = (e as Error).message;
@@ -98,9 +78,6 @@ export function QRScanner({
 
   React.useEffect(() => () => stop(), [stop]);
 
-  // Simulated success — for prototype flow when no native detector exists.
-  const simulate = () => onResult(`droposit://${mode}/u_${Math.floor(Math.random() * 9000)}`);
-
   return (
     <div className="surface-card overflow-hidden p-0">
       <div className="relative aspect-square w-full bg-black">
@@ -116,7 +93,7 @@ export function QRScanner({
               <>
                 <Camera size={36} className="text-primary-400" />
                 <p className="text-small text-gray-300 max-w-[28ch]">
-                  Use camera to scan QR codes in order to {mode} item(s)
+                  Point the camera at a depositor&apos;s QR code to scan it
                 </p>
                 <Button size="md" onClick={start}>
                   Enable camera
@@ -130,8 +107,7 @@ export function QRScanner({
               <>
                 <ZapOff size={28} className="text-danger" />
                 <p className="text-small text-gray-300 max-w-[28ch]">
-                  Camera permission was blocked. Update browser settings or use
-                  manual entry below.
+                  Camera permission was blocked. Update browser settings or use manual entry below.
                 </p>
                 <Button size="md" variant="secondary" onClick={start}>
                   <RefreshCw size={16} /> Try again
@@ -149,7 +125,6 @@ export function QRScanner({
           </div>
         )}
 
-        {/* Scanner reticle and animated scan line — only when streaming */}
         {status === "ready" && (
           <>
             <div className="pointer-events-none absolute inset-0">
@@ -170,20 +145,15 @@ export function QRScanner({
           </>
         )}
       </div>
-      <div className="flex items-center justify-between p-4 gap-3">
+      <div className="flex items-center justify-between p-4">
         <p className="text-caption text-gray-400">
           {status === "ready" ? "Align QR within frame" : "Camera idle"}
         </p>
-        <div className="flex gap-2">
-          {status === "ready" && (
-            <Button size="sm" variant="secondary" onClick={stop}>
-              Stop
-            </Button>
-          )}
-          <Button size="sm" variant="ghost" onClick={simulate}>
-            Simulate scan
+        {status === "ready" && (
+          <Button size="sm" variant="secondary" onClick={stop}>
+            Stop
           </Button>
-        </div>
+        )}
       </div>
       {error && status !== "ready" && (
         <p className="px-4 pb-3 text-caption text-danger">{error}</p>

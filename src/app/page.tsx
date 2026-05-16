@@ -25,19 +25,10 @@ export default function LandingPage() {
             </span>
             Droposit
           </span>
-          <Link
-            href="/login"
-            className="text-small text-gray-300 hover:text-white transition"
-          >
-            Sign in
-          </Link>
         </header>
 
         <main className="flex-1 flex flex-col justify-center px-6 gap-8">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.05] border border-white/[0.06] px-3 py-1.5 text-caption text-primary-300">
-              <Sparkles size={12} /> Built for high-volume events
-            </span>
             <h1 className="mt-5 text-display font-display text-white text-balance leading-[1.05]">
               Deposit.
               <br />

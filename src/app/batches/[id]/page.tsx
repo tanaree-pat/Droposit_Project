@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Plus, QrCode } from "lucide-react";
 import { MobileShell, PageBody } from "@/components/layout/mobile-shell";
 import { TopBar } from "@/components/layout/top-bar";
@@ -22,24 +21,27 @@ export default function BatchDetailPage() {
   const { user, loading: authLoading } = useRequireAuth("depositor");
   const [batch, setBatch] = React.useState<Batch | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [notFound404, setNotFound404] = React.useState(false);
+  const [fetchError, setFetchError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!user) return;
     batchesApi.get(parseInt(id))
       .then(setBatch)
-      .catch(() => setNotFound404(true))
+      .catch((err) => setFetchError(err instanceof Error ? err.message : "Could not load batch"))
       .finally(() => setLoading(false));
   }, [user, id]);
 
   if (authLoading || !user) return null;
-  if (notFound404) notFound();
 
   return (
     <MobileShell>
       <TopBar back title={batch?.title ?? "Batch"} />
       <PageBody>
-        {loading || !batch ? (
+        {fetchError ? (
+          <div className="rounded-lg bg-danger/10 border border-danger/20 px-4 py-3 text-small text-danger">
+            {fetchError}
+          </div>
+        ) : loading || !batch ? (
           <>
             <Skeleton className="h-10 w-2/3" />
             <Skeleton className="h-5 w-1/2" />
@@ -50,7 +52,7 @@ export default function BatchDetailPage() {
         ) : (
           <>
             <header className="flex flex-col gap-3">
-              <h1 className="text-h1 font-display text-white text-balance">My Item Batch</h1>
+              <h1 className="text-h1 font-display text-white text-balance">{batch.title}</h1>
               <div className="flex items-center gap-3">
                 <StatusPill status={batch.status} tone="solid" />
                 <span className="text-small text-gray-400">

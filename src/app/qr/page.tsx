@@ -61,7 +61,7 @@ export default function QRPage() {
 
   return (
     <MobileShell>
-      <TopBar title="Batch QR" back />
+      <TopBar title="Batch QR" />
       <PageBody className="gap-6">
         <header>
           <h1 className="text-h1 font-display text-white">Batch QR</h1>
@@ -93,7 +93,7 @@ export default function QRPage() {
                       ].join(" ")}
                     >
                       <span className="truncate max-w-[120px]">{b.title}</span>
-                      <StatusPill status={b.status} tone="soft" size="sm" />
+                      <StatusPill status={b.status} tone="solid" size="sm" />
                     </button>
                   ))}
                 </div>

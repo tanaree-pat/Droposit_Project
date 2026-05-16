@@ -17,25 +17,18 @@ const labels: Record<ItemStatus, string> = {
   claimed: "Claimed",
 };
 
-const palettes: Record<
-  ItemStatus,
-  { solid: string; soft: string; dot: string }
-> = {
+const palettes: Record<ItemStatus, { solid: string; soft: string }> = {
   pending: {
     solid: "bg-warning text-gray-900 shadow-[0_0_18px_rgba(245,158,11,0.35)]",
     soft: "bg-warning/15 text-warning border border-warning/30",
-    dot: "bg-warning",
   },
   deposited: {
-    solid:
-      "bg-secondary-400 text-white shadow-[0_0_18px_rgba(182,127,75,0.3)]",
+    solid: "bg-secondary-400 text-white shadow-[0_0_18px_rgba(182,127,75,0.3)]",
     soft: "bg-secondary-400/15 text-secondary-300 border border-secondary-400/30",
-    dot: "bg-secondary-400",
   },
   claimed: {
     solid: "bg-primary-500 text-white shadow-glow",
     soft: "bg-primary-500/15 text-primary-400 border border-primary-500/30",
-    dot: "bg-primary-500",
   },
 };
 
@@ -64,13 +57,6 @@ export function StatusPill({
         className
       )}
     >
-      <span
-        className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          tone === "solid" ? "bg-white/80" : palette.dot
-        )}
-        aria-hidden
-      />
       {label ?? labels[status]}
     </span>
   );

@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from models import db, Batch, ScanLog, User
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+def now_bkk():
+    return datetime.now(timezone(timedelta(hours=7))).replace(tzinfo=None)
 
 scan_bp = Blueprint('scan', __name__)
 
@@ -43,7 +46,7 @@ def deposit(qr_token):
     checkpoint = (request.get_json() or {}).get('checkpoint', '')
 
     batch.status = 'deposited'
-    batch.deposited_at = datetime.utcnow()
+    batch.deposited_at = now_bkk()
     batch.staff_id = staff_id
 
     log = ScanLog(batch_id=batch.id, staff_id=staff_id, action='deposit', checkpoint=checkpoint)
@@ -66,7 +69,7 @@ def checkout(qr_token):
     checkpoint = (request.get_json() or {}).get('checkpoint', '')
 
     batch.status = 'claimed'
-    batch.claimed_at = datetime.utcnow()
+    batch.claimed_at = now_bkk()
 
     log = ScanLog(batch_id=batch.id, staff_id=staff_id, action='checkout', checkpoint=checkpoint)
     db.session.add(log)

@@ -45,9 +45,6 @@ export default function HomePage() {
       <TopBar />
       <PageBody>
         <section className="-mt-2">
-          <p className="text-caption uppercase tracking-[0.18em] text-primary-300/80">
-            <Sparkles size={12} className="inline mr-1.5 -mt-0.5" /> Good morning
-          </p>
           {loading ? (
             <Skeleton className="h-9 w-40 mt-1" />
           ) : (
@@ -138,7 +135,7 @@ function SnapshotCard({
 }) {
   return (
     <div className="surface-card p-4 flex flex-col gap-2">
-      <StatusPill status={status} tone="soft" size="sm" />
+      <StatusPill status={status} tone="solid" size="sm" />
       <div className="flex items-baseline justify-between">
         <span className="text-h2 font-display text-white tabular-nums">{value}</span>
         <Boxes size={14} className="text-gray-500" />

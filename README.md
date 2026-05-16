@@ -2,6 +2,8 @@
 
 A mobile-first web app for managing item deposits at high-volume events. Depositors group items into batches, generate a QR code, and hand them over to staff. Staff scan the QR to accept and return items. Every batch is tracked through three states: **pending → deposited → claimed**.
 
+> For full project context — goals, design decisions, and feature rationale — see **[PROJECT.md](./PROJECT.md)**.
+
 ---
 
 ## Stack
@@ -141,4 +143,4 @@ Droposit/
 | GET | `/admin/batches` | staff | List all batches |
 | GET | `/admin/batches/:id` | staff | Batch detail |
 
-Full documentation in `PROJECT.md`.
+Full documentation in [`PROJECT.md`](./PROJECT.md).

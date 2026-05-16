@@ -36,6 +36,18 @@ next-env.d.ts
 # claude code
 .claude/
 
+# python
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+*.pyo
+
+# sqlite database
+backend/instance/droposit.db
+
+# uploaded item photos
+backend/uploads/
+
 # editor
 .vscode/*
 !.vscode/extensions.json

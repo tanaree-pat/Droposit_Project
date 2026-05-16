@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Bell, QrCode, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -55,13 +55,7 @@ export function TopBar({
             </button>
           )
         ) : (
-          <button
-            type="button"
-            aria-label="Menu"
-            className="inline-flex h-11 w-11 items-center justify-center text-white"
-          >
-            <MoreHorizontal size={22} />
-          </button>
+          <div className="min-w-[44px]" />
         )}
       </div>
       {title && (
@@ -78,22 +72,12 @@ export function TopBar({
 
 function DefaultTopBarActions() {
   return (
-    <>
-      <Link
-        href="/notifications"
-        aria-label="Notifications"
-        className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white hover:bg-white/[0.1] transition pressable"
-      >
-        <Bell size={18} />
-        <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary-400 shadow-glow" />
-      </Link>
-      <Link
-        href="/qr"
-        aria-label="My QR code"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary-500 text-white shadow-glow hover:bg-primary-400 transition pressable"
-      >
-        <QrCode size={18} />
-      </Link>
-    </>
+    <Link
+      href="/qr"
+      aria-label="My QR code"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary-500 text-white shadow-glow hover:bg-primary-400 transition pressable"
+    >
+      <QrCode size={18} />
+    </Link>
   );
 }

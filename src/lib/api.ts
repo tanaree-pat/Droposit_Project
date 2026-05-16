@@ -7,6 +7,24 @@ function getToken(): string | null {
   return localStorage.getItem("drp_token");
 }
 
+async function requestForm<T>(path: string, form: FormData): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (res.status === 401) {
+    if (typeof window !== "undefined") window.dispatchEvent(new Event("drp:unauthorized"));
+    throw new Error("Unauthorized");
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
@@ -89,7 +107,9 @@ function mapItem(raw: RawItem, batchId: number, batchStatus: string): Item {
     batchId: String(batchId),
     title: raw.name,
     description: raw.description ?? "",
-    imageUrl: raw.image_url ?? undefined,
+    imageUrl: raw.image_url
+      ? raw.image_url.startsWith("http") ? raw.image_url : `${BASE}${raw.image_url}`
+      : undefined,
     status: batchStatus as Item["status"],
     createdAt: raw.created_at,
   };
@@ -174,8 +194,19 @@ export const batchesApi = {
   create: (data: { name: string; description?: string }) =>
     request<RawBatch>("/batches", { method: "POST", body: JSON.stringify(data) }).then(mapBatch),
 
-  addItem: (batchId: number, data: { name: string; description?: string }) =>
-    request<RawItem>(`/batches/${batchId}/items`, { method: "POST", body: JSON.stringify(data) }),
+  addItem: (batchId: number, data: { name: string; description?: string; image?: File | null }) => {
+    if (data.image) {
+      const form = new FormData();
+      form.append("name", data.name);
+      if (data.description) form.append("description", data.description);
+      form.append("image", data.image);
+      return requestForm<RawItem>(`/batches/${batchId}/items`, form);
+    }
+    return request<RawItem>(`/batches/${batchId}/items`, {
+      method: "POST",
+      body: JSON.stringify({ name: data.name, description: data.description }),
+    });
+  },
 
   editItem: (batchId: number, itemId: number, data: { name?: string; description?: string }) =>
     request<RawItem>(`/batches/${batchId}/items/${itemId}`, {
