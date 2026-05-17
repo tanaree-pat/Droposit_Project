@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -15,7 +16,18 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, origins=["http://localhost:3000", "http://192.168.1.33:3000"], supports_credentials=True)
+    CORS(app,
+         origins=[
+             "http://localhost:3000",
+             re.compile(r"^http://192\.168\.\d+\.\d+:3000$"),
+             re.compile(r"^http://172\.\d+\.\d+\.\d+:3000$"),
+             re.compile(r"^http://10\.\d+\.\d+\.\d+:3000$"),
+             re.compile(r"https://.*\.ngrok-free\.app"),
+             re.compile(r"https://.*\.ngrok\.io"),
+         ],
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
 
     db.init_app(app)
     JWTManager(app)

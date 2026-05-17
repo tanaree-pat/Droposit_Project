@@ -12,7 +12,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { ItemCard } from "@/components/batch/item-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRequireAuth } from "@/lib/auth-context";
-import { scanApi } from "@/lib/api";
+import { scanApi, BASE } from "@/lib/api";
 import type { Batch } from "@/lib/types";
 
 export default function ScanResultPage() {
@@ -46,7 +46,11 @@ export default function ScanResultPage() {
             batchId: String(raw.batch_id),
             title: i.name,
             description: i.description ?? "",
-            imageUrl: (i as { image_url?: string | null }).image_url ?? undefined,
+            imageUrl: (() => {
+              const u = (i as { image_url?: string | null }).image_url;
+              if (!u) return undefined;
+              return u.startsWith("http") ? u : `${BASE}${u}`;
+            })(),
             status: raw.status as Batch["status"],
             createdAt: (i as { created_at?: string }).created_at ?? "",
           })),
